@@ -1,121 +1,93 @@
-# Retro-Go SD template — one project = one CORE or one GWHB homebrew.
+# Retro-Go SD — Snake GWHB homebrew
 #
-#   make                  — build + pack (default: PROJECT_KIND=core)
 #   make PROJECT_KIND=homebrew
 #   make host             — Linux/macOS SDL binary (same src/main.c)
 #   make host HOST_SDL=3  — same with SDL3
-#   make docker           — same build inside Docker (no host toolchain)
-#   make docker_shell     — interactive shell in the builder image
+#   make docker PROJECT_KIND=homebrew
 #
-# Customize CORE_NAME / pack metadata below, then replace src/main.c.
+# Upstream game: https://github.com/slipperstree/game-and-watch-snake
 # Verbose compiler lines: make V=
 
 #######################################
 # Project identity
 #######################################
-# core     → pack_core.py     → /cores/<name>.bin
-# homebrew → pack_homebrew.py → /homebrews/<name>.bin
-PROJECT_KIND ?= core
+PROJECT_KIND ?= homebrew
 
-CORE_NAME  := example
+CORE_NAME  := snake
 CORE_ENTRY := app_main
 
 CORE_C_SOURCES := \
-src/main.c
+src/main.c \
+src/snake/Src/common.c \
+src/snake/Src/control.c \
+src/snake/Src/display.c \
+src/snake/Src/embSnake.c \
+src/snake/Src/embSnakeDevice.c \
+src/snake/Src/font.c \
+src/snake/Src/gw_draw.c \
+src/snake/Src/key.c \
+src/snake/Src/myMathUtil.c \
+src/snake/Src/saveData.c \
+src/snake/Src/snake_platform.c
 
-# Relative path so Docker bind-mounts work (do NOT use $(abspath) — it
-# bakes the host path into Make prerequisites / .d files). Do not name
-# this SDK_ROOT: that env var is commonly set by Android SDK installs.
+CORE_C_INCLUDES := \
+-Isrc/snake/Inc
+
 GNW_CORE_SDK ?= sdk
-# Separate build trees so switching PROJECT_KIND does not reuse stale .o.
 BUILD_DIR ?= build/$(PROJECT_KIND)
 
 #######################################
 # Kind-specific compile defs + packing
 #######################################
 ifeq ($(PROJECT_KIND),core)
-# Match release-firmware layout of retro_emulator_file_t: COVERFLOW fields
-# sit before cheat_* — CHEAT_CODES alone with COVERFLOW=0 misaligns pointers.
-# MAX_CHEAT_CODES mirrors Makefile.common's release default.
-CORE_C_DEFS := \
--DPROJECT_KIND_CORE=1 \
--DCOVERFLOW=1 \
--DCHEAT_CODES=1 \
--DMAX_CHEAT_CODES=13
-
-PACKED_BIN  := $(CORE_NAME).bin
-PAD_LOGO    := src/assets/pad.png
-HEADER_LOGO := src/assets/header.png
+$(error This project is a homebrew only — use PROJECT_KIND=homebrew)
 
 else ifeq ($(PROJECT_KIND),homebrew)
 CORE_C_DEFS := \
 -DPROJECT_KIND_HOMEBREW=1
 
-PACKED_BIN := ExampleHB.bin
-HB_NAME    := Example Homebrew
-# Compact coverflow tile (HW max is 186x100 — do not use full width by default).
-COVER_JPG    := $(BUILD_DIR)/cover.jpg
-COVER_WIDTH  ?= 128
-COVER_HEIGHT ?= 96
+PACKED_BIN := Snake.bin
+COVER_JPG  := $(BUILD_DIR)/cover.jpg
 
 else
-$(error PROJECT_KIND must be 'core' or 'homebrew' (got '$(PROJECT_KIND)'))
+$(error PROJECT_KIND must be 'homebrew' (got '$(PROJECT_KIND)'))
 endif
 
 include $(GNW_CORE_SDK)/Makefile
 
-PACK_CORE     := $(GNW_CORE_SDK)/tools/pack_core.py
 PACK_HOMEBREW := $(GNW_CORE_SDK)/tools/pack_homebrew.py
-GEN_COVER     := scripts/gen_homebrew_cover.py
 
 #######################################
 # Pack
 #######################################
 .PHONY: pack cover
 
-ifeq ($(PROJECT_KIND),core)
-
-pack: $(TARGET_BIN) $(PAD_LOGO) $(HEADER_LOGO)
-	$(V)$(ECHO) [ PACK CORE ] $(PACKED_BIN)
-	$(V)python3 $(PACK_CORE) \
-		--elf $(TARGET_ELF) --bin $(TARGET_BIN) \
-		--system-name "Example Core" --dirname example \
-		--extensions "bin" \
-		--core-name "Example" \
-		--version 1.0.0 \
-		--cheat-ext ggcodes \
-		--pad-logo $(PAD_LOGO) \
-		--header-logo $(HEADER_LOGO) \
-		--out $(PACKED_BIN)
-
-else
-
 .PHONY: cover
 cover: $(COVER_JPG)
 
-# Must stay ≤ gui.c COVER_MAX_WIDTH x COVER_MAX_HEIGHT (186x100) and
-# COVER_SIZE (10 KiB) — oversized covers smash the HW JPEG scratch.
-$(COVER_JPG): $(GEN_COVER)
-	$(V)$(ECHO) [ COVER ] $(COVER_JPG) ($(COVER_WIDTH)x$(COVER_HEIGHT))
-	$(V)python3 $(GEN_COVER) \
-		--out $(COVER_JPG) \
-		--title "$(HB_NAME)" \
-		--width $(COVER_WIDTH) \
-		--height $(COVER_HEIGHT)
+# Homebrew cover: 128×96 (within gui.c COVER_MAX 186×100) and ≤10 KiB.
+$(COVER_JPG): src/assets/cover_src.jpg
+	@mkdir -p $(BUILD_DIR)
+	python3 -c "from pathlib import Path; from PIL import Image; \
+img=Image.open('src/assets/cover_src.jpg').convert('RGB'); \
+img.thumbnail((128,96)); \
+canvas=Image.new('RGB', (128,96), (8,16,24)); \
+x=(128-img.width)//2; y=(96-img.height)//2; \
+canvas.paste(img, (x,y)); \
+canvas.save('$(COVER_JPG)', 'JPEG', quality=80, optimize=True); \
+sz=Path('$(COVER_JPG)').stat().st_size; \
+assert sz <= 10*1024, f'cover too big: {sz}'"
 
 pack: $(TARGET_BIN) $(COVER_JPG)
 	$(V)$(ECHO) [ PACK GWHB ] $(PACKED_BIN)
 	$(V)python3 $(PACK_HOMEBREW) \
 		--elf $(TARGET_ELF) --bin $(TARGET_BIN) \
-		--name "$(HB_NAME)" --version 1.0.0 \
+		--name "Snake" --version 1.0.0 \
 		--cover $(COVER_JPG) \
 		--out $(PACKED_BIN)
 
-endif
-
 all: pack
 
-# Read-only helpers for CI / scripts (make print-PROJECT_KIND, etc.).
 .PHONY: print-PROJECT_KIND print-PACKED_BIN print-CORE_NAME print-DOCKER_IMAGE
 print-PROJECT_KIND:
 	@echo $(PROJECT_KIND)
@@ -128,9 +100,7 @@ print-DOCKER_IMAGE:
 
 clean::
 	$(V)rm -f $(PACKED_BIN)
-ifeq ($(PROJECT_KIND),homebrew)
 	$(V)rm -f $(COVER_JPG)
-endif
 
 #######################################
 # Docker (same image as firmware repo)
@@ -142,7 +112,6 @@ DOCKER_REPOSITORY ?= sylverb/retro-go-sd-builder
 DOCKER_IMAGE ?= $(DOCKER_REPOSITORY):$(RELEASE_VERSION)
 
 DOCKER_TTY_FLAG := $(shell if [ -t 0 ]; then echo -it; else echo; fi)
-# Host UID so build/ artifacts are not root-owned on the bind mount.
 DOCKER_USER := $(shell id -u):$(shell id -g)
 DOCKER_RUN := docker run --rm $(DOCKER_TTY_FLAG) \
 	--user $(DOCKER_USER) \
@@ -150,8 +119,6 @@ DOCKER_RUN := docker run --rm $(DOCKER_TTY_FLAG) \
 	-w /opt/workdir \
 	$(DOCKER_IMAGE)
 
-# Compile inside the published builder image (uses the local copy).
-# Refresh with `make docker_pull` when you want a newer digest for the tag.
 docker:
 	$(V)$(ECHO) "[ DOCKER ]" $(DOCKER_IMAGE) "PROJECT_KIND=$(PROJECT_KIND)"
 	$(V)$(DOCKER_RUN) make --no-print-directory -j$$(nproc) PROJECT_KIND=$(PROJECT_KIND)
@@ -160,7 +127,6 @@ docker_pull:
 	$(V)$(ECHO) "[ PULL ]" $(DOCKER_IMAGE)
 	$(V)docker pull $(DOCKER_IMAGE)
 
-# Interactive shell with the same image / mount as `make docker`.
 docker_shell:
 	$(DOCKER_RUN) bash
 

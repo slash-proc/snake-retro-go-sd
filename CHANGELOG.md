@@ -1,12 +1,5 @@
 # Changelog
 
-This file is a template for the single project created from this repo.
-At project setup time you choose exactly one kind by setting `PROJECT_KIND`
-to `core` or `homebrew` (you will only build/release that chosen kind).
-
-Update the content for your project and keep the section heading matching
-the pushed release tag (CI requirement).
-
 This file follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Release tags must
 match a section heading exactly (for example `v1.0.0`).
@@ -34,39 +27,13 @@ is also used in staged asset names (`<binary>-<tag>.bin`, `<binary>-<tag>.zip`).
 
 - (your changes here)
 
-## [v1.0.0] - 2026-08-12
+## [v1.0.0] - 2026-08-17
 
-Initial public release for your chosen kind (`core` or `homebrew`).
+Initial Snake GWHB homebrew for Retro-Go SD.
 
 ### Added
 
-- Freestanding Cortex-M7 skeleton (`src/main.c`) with LCD demo, square-wave
-  audio, save/load/screenshot hooks, and watchdog-friendly frame loop.
-- Vendored SDK, linker scripts, and ABI bridge for `gw_firmware_abi_t`.
-- Packaging for both project kinds:
-  - **core** → `pack_core.py`, SD path `/cores/<name>.bin`
-  - **homebrew** → `pack_homebrew.py`, SD path `/homebrews/<name>.bin`
-- Docker builder integration (`make docker`) using `sylverb/retro-go-sd-builder`.
-- CI build on push/PR and automated GitHub Release on `v*` tags.
-
-### Install
-
-Only the section corresponding to your chosen `PROJECT_KIND` is relevant for
-your derived project.
-
-**Core (`PROJECT_KIND=core`, default)**
-
-- Copy `example.bin` to `/cores/` on the SD card.
-- Place test ROMs under `/roms/example/` (dirname matches `CORE_NAME` in the
-  Makefile).
-- Requires firmware whose ABI matches `SDK_VERSION` in this repository.
-
-**Homebrew (`PROJECT_KIND=homebrew`)**
-
-- Set `PROJECT_KIND=homebrew` in the Makefile, rebuild, then copy
-  `ExampleHB.bin` to `/homebrews/`.
-- Optional coverflow override: `/covers/homebrew/ExampleHB.img` (JPEG ≤186×100,
-  ≤10 KiB).
-
-The release archive contains the ready-to-copy SD layout for the active project
-kind only (`cores/` or `homebrews/`).
+- Port of [slipperstree/game-and-watch-snake](https://github.com/slipperstree/game-and-watch-snake)
+  as a freestanding GWHB (`Snake.bin` → `/roms/homebrew/`)
+- Hi-score / sound preference persistence via `odroid_settings`
+- Short beeps for eat / death / game over through the Retro-Go audio path

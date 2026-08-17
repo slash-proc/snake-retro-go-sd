@@ -2,8 +2,7 @@
 #
 #   make host                     # SDL2, same PROJECT_KIND as device build
 #   make host HOST_SDL=3          # SDL3
-#   make host PROJECT_KIND=homebrew
-#   ./example_host [rom]          # optional ROM path (cores); or HOST_ROM=…
+#   ./snake_host                  # Esc / close window to quit
 #
 # Requires: pkg-config + libsdl2-dev / sdl2 (or sdl3).
 
@@ -13,12 +12,7 @@ HOST_SCALE ?= 2
 HOST_CC    ?= cc
 
 HOST_BUILD_DIR := build/host/$(PROJECT_KIND)_sdl$(HOST_SDL)
-
-ifeq ($(PROJECT_KIND),homebrew)
-HOST_BIN := ExampleHB_host
-else
 HOST_BIN := $(CORE_NAME)_host
-endif
 
 ifeq ($(HOST_SDL),3)
 HOST_SDL_PC := sdl3
@@ -57,9 +51,18 @@ HOST_INCLUDES := \
 	-I$(HOST_INC_ROOT)/Core/Src/porting/lib \
 	-I$(HOST_INC_ROOT)/Core/Src/porting/lib/FatFs \
 	-I$(HOST_INC_ROOT)/retro-go-stm32/components/odroid \
+	$(CORE_C_INCLUDES) \
 	$(HOST_PKG_CFLAGS)
 
+# Clang treats several upstream EmbSnake conversions as errors; ARM GCC
+# only warned. Keep host usable without rewriting the game sources.
 HOST_CFLAGS := -O2 -g -Wall -Wextra -std=c11 \
+	-Wno-int-conversion \
+	-Wno-pointer-sign \
+	-Wno-pointer-to-int-cast \
+	-Wno-unused-variable \
+	-Wno-unused-parameter \
+	-Wno-unused-but-set-variable \
 	-include host/stubs/config.h \
 	$(HOST_DEFS) $(HOST_INCLUDES)
 
@@ -95,7 +98,7 @@ $(HOST_BUILD_DIR)/host/%.o: host/%.c
 
 host_clean:
 	$(V)rm -rf build/host
-	$(V)rm -f $(CORE_NAME)_host ExampleHB_host
+	$(V)rm -f $(HOST_BIN)
 
 clean:: host_clean
 
