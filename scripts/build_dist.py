@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -68,17 +69,40 @@ def list_releases(repo: str, require_tag: str | None = None, attempts: int = 6) 
     return []
 
 
-def fetch_asset(repo: str, tag: str, name: str, dest: Path) -> bool:
-    """Download one release asset. False when the release does not carry it."""
+def asset_name(filename: str) -> str:
+    """What GitHub calls a file once it is a release asset.
+
+    GitHub rewrites characters it will not put in an asset name -- a space
+    becomes a dot -- so "Super Mario World.bin" is attached, and must be
+    downloaded, as "Super.Mario.World.bin". The mirror stores it under the name
+    the manifest declares, because that is the name the device wants and the
+    name an installer resolves. The rewrite is an artifact of the archival
+    copy, not something the manifest should have to know about.
+    """
+    return re.sub(r"[^A-Za-z0-9._-]", ".", filename)
+
+
+def fetch_asset(repo: str, tag: str, name: str, dest: Path, *, save_as: str | None = None) -> bool:
+    """Download one release asset. False when the release does not carry it.
+
+    `name` is the file as the manifest names it; the asset is fetched under
+    whatever GitHub renamed it to and then restored to `save_as` (default
+    `name`), so the mirror matches the manifest rather than the upload.
+    """
+    remote = asset_name(name)
     try:
         subprocess.run(
             ["gh", "release", "download", tag, "--repo", repo,
-             "--pattern", name, "--dir", str(dest), "--clobber"],
+             "--pattern", remote, "--dir", str(dest), "--clobber"],
             check=True, capture_output=True, text=True,
         )
-        return True
     except subprocess.CalledProcessError:
         return False
+
+    want = save_as or name
+    if remote != want:
+        (dest / remote).replace(dest / want)
+    return True
 
 
 def download(repo: str, tag: str, dest: Path) -> bool:
