@@ -155,6 +155,11 @@ def parse_segment_arg(spec: str):
 
 
 def parse_version(spec: str) -> tuple[int, int, int]:
+    """Parse X.Y.Z / git describe / NOTAG into (major, minor, patch).
+
+    Only the leading X.Y.Z is stored in the header (3 bytes); the full
+    describe string is for build logs / Makefile only. NOTAG / empty → 0.0.0.
+    """
     s = spec.strip()
     if not s or s.upper() == "NOTAG":
         return 0, 0, 0

@@ -78,11 +78,17 @@ canvas.save('$(COVER_JPG)', 'JPEG', quality=80, optimize=True); \
 sz=Path('$(COVER_JPG)').stat().st_size; \
 assert sz <= 10*1024, f'cover too big: {sz}'"
 
+# CORE_VERSION is the full git describe string passed to the packer; it stores
+# the leading X.Y.Z in the header and keeps the rest for build logs. An
+# untagged build is NOTAG, which the packer stamps as 0.0.0.
+# Override: make CORE_VERSION=v1.2.3
+CORE_VERSION ?= $(shell git describe --tags --dirty 2>/dev/null || echo NOTAG)
+
 pack: $(TARGET_BIN) $(COVER_JPG)
-	$(V)$(ECHO) [ PACK GWHB ] $(PACKED_BIN)
+	$(V)$(ECHO) [ PACK GWHB ] $(PACKED_BIN) version=$(CORE_VERSION)
 	$(V)python3 $(PACK_HOMEBREW) \
 		--elf $(TARGET_ELF) --bin $(TARGET_BIN) \
-		--name "Snake" --version 1.0.0 \
+		--name "Snake" --version "$(CORE_VERSION)" \
 		--cover $(COVER_JPG) \
 		--out $(PACKED_BIN)
 
@@ -90,7 +96,7 @@ all: pack
 
 # Read-only helpers for CI / scripts (make print-PROJECT_KIND, etc.).
 .PHONY: print-PROJECT_KIND print-PACKED_BIN print-CORE_NAME print-DOCKER_IMAGE \
-	print-TARGET_ELF print-TARGET_MAP
+	print-TARGET_ELF print-TARGET_MAP print-CORE_VERSION
 print-PROJECT_KIND:
 	@echo $(PROJECT_KIND)
 print-PACKED_BIN:
@@ -103,6 +109,8 @@ print-TARGET_ELF:
 	@echo $(TARGET_ELF)
 print-TARGET_MAP:
 	@echo $(BUILD_DIR)/$(CORE_NAME)_core.map
+print-CORE_VERSION:
+	@echo $(CORE_VERSION)
 
 clean::
 	$(V)rm -f $(PACKED_BIN)
