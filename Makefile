@@ -95,7 +95,7 @@ pack: $(TARGET_BIN) $(COVER_JPG)
 all: pack
 
 .PHONY: print-PROJECT_KIND print-PACKED_BIN print-CORE_NAME print-DOCKER_IMAGE \
-	print-CORE_VERSION
+	print-TARGET_ELF print-TARGET_MAP print-CORE_VERSION
 print-PROJECT_KIND:
 	@echo $(PROJECT_KIND)
 print-PACKED_BIN:
@@ -104,6 +104,10 @@ print-CORE_NAME:
 	@echo $(CORE_NAME)
 print-DOCKER_IMAGE:
 	@echo $(DOCKER_IMAGE)
+print-TARGET_ELF:
+	@echo $(TARGET_ELF)
+print-TARGET_MAP:
+	@echo $(BUILD_DIR)/$(CORE_NAME)_core.map
 print-CORE_VERSION:
 	@echo $(CORE_VERSION)
 
