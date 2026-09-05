@@ -37,11 +37,21 @@ def read_make_vars() -> dict[str, str]:
     for var in MAKE_VARS:
         cmd.append(f"print-{var}")
 
+    # Keep stderr out of the parse. A Makefile is free to $(warning) at parse
+    # time -- host/Makefile.host does when SDL is not installed, which is every
+    # CI runner -- and folding that into stdout turns a diagnostic into a value.
     try:
-        out = subprocess.check_output(cmd, cwd=ROOT, text=True, stderr=subprocess.STDOUT)
+        proc = subprocess.run(
+            cmd, cwd=ROOT, text=True, capture_output=True, check=True
+        )
     except subprocess.CalledProcessError as exc:
-        print(exc.output or exc, file=sys.stderr)
+        print(exc.stdout or "", file=sys.stderr)
+        print(exc.stderr or "", file=sys.stderr)
         raise SystemExit(f"failed to read Makefile variables from {MAKEFILE}") from exc
+
+    out = proc.stdout
+    if proc.stderr.strip():
+        print(proc.stderr.rstrip(), file=sys.stderr)
 
     values = out.splitlines()
     if len(values) != len(MAKE_VARS):
