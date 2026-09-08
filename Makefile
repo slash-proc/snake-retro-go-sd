@@ -85,7 +85,7 @@ assert sz <= 10*1024, f'cover too big: {sz}'"
 # the leading X.Y.Z in the header and keeps the rest for build logs. An
 # untagged build is NOTAG, which the packer stamps as 0.0.0.
 # Override: make CORE_VERSION=v1.2.3
-CORE_VERSION ?= $(shell git describe --tags --dirty 2>/dev/null || echo NOTAG)
+CORE_VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null || echo 0.0.0)
 
 pack: $(TARGET_BIN) $(COVER_JPG)
 	$(V)$(ECHO) [ PACK GWHB ] $(PACKED_BIN) version=$(CORE_VERSION)
