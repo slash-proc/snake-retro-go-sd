@@ -3,7 +3,9 @@
 GWHB port of [slipperstree/game-and-watch-snake](https://github.com/slipperstree/game-and-watch-snake)
 for [Game & Watch Retro-Go SD](https://github.com/sylverb/game-and-watch-retro-go-sd).
 
-Drop `Snake.bin` on the SD card under `/roms/homebrew/`.
+Drop `Snake.bin` on the SD card under `/homebrews/` (or unzip a release
+archive onto the SD root). Optional cover override:
+`/covers/homebrew/Snake.img`.
 
 ## Build
 
@@ -13,7 +15,7 @@ make                    # PROJECT_KIND=homebrew is the default
 make docker
 ```
 
-Produces `Snake.bin` (optional cover override: `/covers/homebrew/Snake.img`).
+Produces `Snake.bin`.
 
 Host SDL preview (same `src/main.c`, no G&W flash cycle):
 
