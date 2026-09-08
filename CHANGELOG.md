@@ -27,6 +27,23 @@ is also used in staged asset names (`<binary>-<tag>.bin`, `<binary>-<tag>.zip`).
 
 - (your changes here)
 
+## [v1.1.0] - 2026-09-08
+
+### Changed
+
+- The SDK moves to the new packed-header model: `gwhb_meta_t` now carries
+  `segments_count` and a `segments[]` array instead of one code/bss pair, and
+  the firmware ABI grows to 844 bytes. Taken from upstream.
+- The shared dist scripts are current: the manifest generator reads either
+  header layout, CI reads the sidecar list from the Makefile rather than one
+  hardcoded slot, and `project` is derived as an identifier instead of copying
+  a display name.
+
+### Added
+
+- The full-size cover art is published with the release, beside the smaller
+  one packed into the binary.
+
 ## [v1.0.1] - 2026-09-05
 
 Release tooling only. Same game, same binary layout.
