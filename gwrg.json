@@ -1,3 +1,0 @@
-{
-  "$comment": "Nothing to declare. Every field in this project's manifest is derived from the built binary and the repository, so scripts/make_manifest.py needs no help. The file exists to say that on purpose rather than by omission."
-}
