@@ -512,40 +512,15 @@ void DISP_drawWelcome(u8 isStartUp){
 
     devScreenON();
 
-    // LOGO
+    /* Logo: draw once at final brightness. Upstream used a multi-second fade
+     * via My_delay_ms; on Retro-Go that runs inside CTL_init / CTL_run and
+     * blocks the firmware pause menu + audio sync for tens of seconds. */
+    (void)isStartUp;
+    (void)r;
     logoX = (SCREEN_W - FONT_LOGO70.fontWidth) / 2;
     logoY = titleY + FONT_TITLE.fontHeight + FONT_LOGO70.fontHeight / 2;
-    if (isStartUp)
-    {
-        My_delay_ms(1000);
-        // S&W LOGO缓缓出现的动画效果
-        while(1){
-            r+=1;
-            if (r>=150) {
-                showChar(logoX, logoY, FONT_LOGO_IDX_0, &FONT_LOGO70, RGB888toRGB565(150, 150, 150), COLOR_BG);
-                break;
-            } 
-            showChar(logoX, logoY, FONT_LOGO_IDX_0, &FONT_LOGO70, RGB888toRGB565(r, r, r), COLOR_BG);
-            My_delay_ms(350);
-        }
-        // 出现后等待一会儿
-        My_delay_ms(500);
-    } else {
-        // 非上电画面，快速显示
-        // S&W LOGO缓缓出现的动画效果
-        while(1){
-            r+=5;
-            if (r>=150) {
-                showChar(logoX, logoY, FONT_LOGO_IDX_0, &FONT_LOGO70, RGB888toRGB565(150, 150, 150), COLOR_BG);
-                break;
-            } 
-            showChar(logoX, logoY, FONT_LOGO_IDX_0, &FONT_LOGO70, RGB888toRGB565(r, r, r), COLOR_BG);
-            My_delay_ms(200);
-        }
-        // 出现后等待一会儿
-        My_delay_ms(200);
-    }
-    
+    showChar(logoX, logoY, FONT_LOGO_IDX_0, &FONT_LOGO70,
+             RGB888toRGB565(150, 150, 150), COLOR_BG);
 }
 
 // ##### 首页 定期被调用

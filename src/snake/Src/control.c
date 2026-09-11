@@ -444,7 +444,8 @@ void eventSnake(){
 
             //先停一会死掉的状态(TODO:GBA 这里会影响死掉时候的maxmod声音播放？？)
             //TODO:这里不要用延时，改成订阅等待帧数的方式，等帧数到达指定数字之后执行回调函数。
-            My_delay_ms(2000);
+            /* Short hold on the death pose (capped in snake_platform_delay_ms). */
+            My_delay_ms(200);
 
             devEnterGameOverPage();
 
@@ -479,7 +480,7 @@ void eventSnake(){
 
             #if !(ISDEBUG && DEBUG_DEMO_GAMEOVER_NOWAIT)
                 // 停一会
-                My_delay_ms(3000);
+                My_delay_ms(200);
             #endif
             
             // 回到欢迎页

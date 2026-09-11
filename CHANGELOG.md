@@ -25,7 +25,11 @@ is also used in staged asset names (`<binary>-<tag>.bin`, `<binary>-<tag>.zip`).
 
 ### Fixed
 
-- (your changes here)
+- The startup logo no longer fades in. The animation busy-waited for tens of
+  seconds inside `CTL_init`, starving the firmware frame loop, so the Retro-Go
+  pause menu and audio sync went unresponsive for the whole intro. The logo is
+  drawn once at final brightness, and the leftover death / demo holds are
+  capped at ~200 ms. Taken from upstream (`86f8071`).
 
 ## [v1.1.0] - 2026-09-08
 
