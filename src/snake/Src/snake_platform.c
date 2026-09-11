@@ -49,18 +49,19 @@ void snake_platform_present(void)
 
 void snake_platform_delay_ms(uint16_t ms)
 {
-    /* Approximate wait as N frames at 60 Hz so death / logo animations keep
-     * the framebuffer on screen and the window watchdog fed. */
+    /* Brief hold only (death pose / demo pause). Long busy-waits starve the
+     * Retro-Go frame loop (PAUSE menu + audio). Cap at ~200 ms. */
     uint32_t frames = ((uint32_t)ms * 60u) / 1000u;
+    if (frames > 12u)
+        frames = 12u;
     if (frames == 0)
         frames = 1;
     while (frames--) {
         if (snake_platform_wdog_fn)
             snake_platform_wdog_fn();
         snake_platform_present();
-        /* ~1 frame busy spin — coarse but enough for UI pauses. */
         {
-            volatile uint32_t spin = 200000u;
+            volatile uint32_t spin = 80000u;
             while (spin--) {
                 if ((spin & 0x3fffu) == 0 && snake_platform_wdog_fn)
                     snake_platform_wdog_fn();
